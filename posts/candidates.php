@@ -1,6 +1,5 @@
 <?php  
 
-
 if(!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/screen.php' );
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
@@ -9,8 +8,7 @@ if(!class_exists('WP_List_Table')){
 
 if(!empty($_POST) && isset($_POST['delete_candidate']))
 {
-    // die(get_post()); 
-    // print_r($_POST['hidden_info']); die; 
+
     $id = $_POST['hidden_info'];
     $sql = "delete from applied_candidates where id = '$id' ";
     global $wpdb;
@@ -18,19 +16,22 @@ if(!empty($_POST) && isset($_POST['delete_candidate']))
 
 }
 
+
 add_action("admin_menu", "wpl_owt_list_table_menu_");
-// add_action("admin_menu", "job_board_custom_post_type");
 
 function wpl_owt_list_table_menu_()
 {
-    // add_menu_page("OWT Applied Candidates", "OWT Applied Candidates", "manage_options", "owt-applied-candidates", "wpl_owt_list_table_fnn");
-    add_submenu_page("job-posts", 'Applied Candidates', 'Applied Candidates', 'manage_options', 'applied-candiates', 'wpl_owt_list_table_fnn');
+
+    add_submenu_page("job-posts", 'Applied Candidates', 'Applied Candidates', 'manage_options', 'applied-candidates', 'wpl_owt_list_table_fnn');
 }
 
 function wpl_owt_list_table_fnn()
 {
     $owt_table = new OWTTableListCandidate();
     $owt_table->prepare_items();
+    echo '<form method="POST"  style="margin-top:15px;"  action='.$_SERVER['PHP_SELF'].'?page=applied-candidates'.' >';
+    $owt_table->search_box('Search Candidates', "search_post_id");
+    echo '</form>';
     $owt_table->display();
 }
 
@@ -39,8 +40,13 @@ class OWTTableListCandidate extends WP_List_Table
 
     public function prepare_items()
     {
-        $this->items = $this->wp_list_table_data();
+
+        $search_name = isset($_POST['s'])? sanitize_text_field(trim($_POST['s'])) : "";
+
+        $this->items = $this->wp_list_table_data($search_name);
+
         $columns = $this->get_columns();
+
         $this->_column_headers = array($columns);
     }
 
@@ -87,26 +93,33 @@ class OWTTableListCandidate extends WP_List_Table
         }
     }
 
-    public function wp_list_table_data()
+    public function wp_list_table_data($search_name)
     {
 
-        global $wpdb;
-        $sql= "select * from applied_candidates";
-        $result = $wpdb->get_results($sql, 'ARRAY_A');
+        global $wpdb; 
         $data = array();
+        $sql = '';
+        if($search_name == "")
+        {
+            $sql = "select * from applied_candidates";
+        } else {
+            $sql = "select * from applied_candidates where name like '%$search_name%'";
+        }
+
+        $result = $wpdb->get_results($sql, 'ARRAY_A');
 
         foreach($result as $key=>$val)
-        {
-            $data[] = array(
-                'id'            => $val['id'],
-                'name'          => $val['name'],
-                'months_of_exp' => $val['months_of_exp'],
-                'phone_no'      => $val['phone_no'],
-                'email'         => $val['email'],
-                'profile'       => $val['profile']
-            );
-        }
-        
+            {
+                $data[] = array(
+                    'id'            => $val['id'],
+                    'name'          => $val['name'],
+                    'months_of_exp' => $val['months_of_exp'],
+                    'phone_no'      => $val['phone_no'],
+                    'email'         => $val['email'],
+                    'profile'       => $val['profile']
+                );
+            }
+
         return $data; 
 
     }
