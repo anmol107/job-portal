@@ -16,7 +16,6 @@ if(!empty($_POST) && isset($_POST['delete_candidate']))
 
 }
 
-
 add_action("admin_menu", "wpl_owt_list_table_menu_");
 
 function wpl_owt_list_table_menu_()
@@ -27,12 +26,20 @@ function wpl_owt_list_table_menu_()
 
 function wpl_owt_list_table_fnn()
 {
-    $owt_table = new OWTTableListCandidate();
-    $owt_table->prepare_items();
-    echo '<form method="POST"  style="margin-top:15px;"  action='.$_SERVER['PHP_SELF'].'?page=applied-candidates'.' >';
-    $owt_table->search_box('Search Candidates', "search_post_id");
-    echo '</form>';
-    $owt_table->display();
+    if( isset( $_GET['action'] ) && $_GET['action'] == 'edit' ) {
+
+        require_once 'edit_candidate.php';
+
+    } else {
+
+        $owt_table = new OWTTableListCandidate();
+        $owt_table->prepare_items();
+        echo '<form method="POST"  style="margin-top:15px;"  action='.$_SERVER['PHP_SELF'].'?page=applied-candidates'.' >';
+        $owt_table->search_box('Search Candidates', "search_post_id");
+        echo '</form>';
+        $owt_table->display();
+    }
+
 }
 
 class OWTTableListCandidate extends WP_List_Table
@@ -49,8 +56,6 @@ class OWTTableListCandidate extends WP_List_Table
 
         $this->_column_headers = array($columns);
     }
-
-
 
     public function get_columns()
     {
@@ -70,6 +75,7 @@ class OWTTableListCandidate extends WP_List_Table
     public function column_name($items)
     {
         $action = array(
+            'edit' => sprintf('<a href="http://192.168.15.169/wordpress/wp-admin/admin.php?page=applied-candidates&candidate_id=%d&action=%s">Edit</a>', $items['id'] ,'edit'),
             'delete' => sprintf('<form method="POST"><input type="hidden" value="%s" name="hidden_info"><input type="submit" value="Delete Candidate" name="delete_candidate"></form>', $items['id'], 'delete')
         );
 

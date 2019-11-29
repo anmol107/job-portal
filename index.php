@@ -111,8 +111,7 @@ function job_form_builder($atts, $content = null)
 
         if(strlen($post_phone) < 10)
         {
-            print_r($post_phone); 
-            print_r($_POST['phone_no']);
+
             $error_msg .= "Invalid phone number input.\n";
         }
 
@@ -179,7 +178,7 @@ function job_form_builder($atts, $content = null)
             <strong>Resume (Accepted File Formats are PDF, DOC and DOCX):</strong> </br></br>
             <input type="file" name="resume" enctype="multipart/form-data" accept=".doc,.docx,.pdf" /></br></br>
             <input type="hidden" name="profile" value="$title" >
-            <input type="submit" value="Submit">
+            <input type="submit" value="Submit" >
         </form>
     </div>
 EOT;
