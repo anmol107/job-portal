@@ -1,6 +1,6 @@
 <?php
 /*
-*Plugin Name: Job Portal
+*Plugin Name: Job Portal, Including Job/Candidate Posts
 */
 
 
@@ -75,62 +75,61 @@ function job_form_builder($atts, $content = null)
 
     if ( ! empty( $_POST ) ) {
 
+        $post_name = '';
+        $post_exp = '';
+        $post_phone = '';
+        $post_email = ''; 
+
         foreach($_POST as $key=>$val)
         {
 
             switch($key)
             {
                 case 'name':
-                $_POST[$key]  =   preg_replace("/[^a-zA-Z]/", "", sanitize_text_field($_POST[$key])); 
+                    $post_name  =   sanitize_text_field($_POST[$key]); 
                 case 'months_of_exp':
-                    $_POST[$key] = preg_replace("/[^0-9]/", "", sanitize_text_field($_POST[$key]));
+                    $post_exp = (int) preg_replace("/[^0-9]/", "", sanitize_text_field($_POST[$key]));
                 case 'phone_no':
-                    $_POST[$key] = preg_replace("/[^0-9]/", "", sanitize_text_field($_POST[$key]));
+                    $post_phone =  preg_replace("/[^0-9]/", "", sanitize_text_field($_POST[$key]));
                 case 'email':
-                    $_POST[$key] = sanitize_email($val);
+                    $post_email = sanitize_email($val);
                 default: 
             }
         }
 
-        $all_fields_present = true;
-        $experience_validate = true; 
-        $phone_validate = true; 
-        $email_validate = true; 
-        $resume_validate = true; 
         $error_msg = '';
 
-        if ($_POST['name'] == "" || $_POST['months_of_exp'] == "" || $_POST['phone_no'] == "" || $_POST['email'] == "")
+        if ($post_name == "" || $post_exp == "" || $post_phone == "" || $post_email == "")
         {
-            $all_fields_present = false;
             $error_msg .= "All fields are mandatory, resume attachment is optional.\n";
         }
 
-        if(!is_numeric($_POST['months_of_exp']))
+        if(!is_numeric($post_exp))
         {
-            $experience_validate = false; 
-            $erro_msg .= "Experience input must be a numeric value.\n";
+            $error_msg .= "Experience input must be a numeric value.\n";
         }
 
-        if(count($_POST['phone_no']) < 10)
+        if(strlen($post_phone) < 10)
         {
-            $phone_validate = false; 
+            print_r($post_phone); 
+            print_r($_POST['phone_no']);
             $error_msg .= "Invalid phone number input.\n";
         }
 
-        if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-            $email_validate = false; 
+        if (!filter_var($post_email, FILTER_VALIDATE_EMAIL)) {
+
             $error_msg .= "Invalid email input.\n";
         }
 
-        if(!preg_match("/\.(doc|docx|pdf)$/", $_POST['resume']))
+        if( !empty($_POST['resume']) && !preg_match("/\.(doc|docx|pdf)$/", $_POST['resume']))
         {
-            $resume_validate = false; 
             $error_msg .= "Resume must be of the following file type: PDF, DOC, DOCX.\n";
         }
 
         if($error_msg != '')
         {
             print_r($error_msg); die; 
+
         } else {
 
             global $wpdb; 
@@ -139,21 +138,24 @@ function job_form_builder($atts, $content = null)
 
             foreach($result as $key=>$val)
             {
-                $same_phone = ($val['phone_no'] == $_POST['phone_no']) ?true:false; 
-                $same_email = ($val['email']    == $_POST['email'])    ?true:false;
+                $same_phone = ($val['phone_no'] == $post_phone) ?true:false; 
+                $same_email = ($val['email']    == $post_email)    ?true:false;
             }
 
             if($same_phone)
             {
-                print_r("The number ".$_POST['phone_no']." already exists in the database. Cannot process your application."); die;
+                print_r("The number ".$post_phone." already exists in the database. Cannot process your application."); die;
+
             } elseif($same_email){
-                print_r("The email ".$_POST['email']." already exists in the database. Cannot process your application."); die;
+
+                print_r("The email ".$post_email." already exists in the database. Cannot process your application."); die;
+
             } else {
 
 
-                $sql = (isset($_POST['resume']))? "insert into applied_candidates(name, months_of_exp, phone_no, email, resume, profile) values ('".$_POST['name']."',".$_POST['months_of_exp'].",'".$_POST['phone_no']."','".$_POST['email']."','".$_POST['resume']."'".",'".$_POST['profile']."')" : "insert into applied_candidates(name, months_of_exp,phone_no, email, profile) values ('".$_POST['name']."',".$_POST['months_of_exp'].",'".$_POST['phone_no']."','".$_POST['email'].",'".$_POST['profile']."')";
+                $sql = (!empty($_POST['resume']))? "insert into applied_candidates(name, months_of_exp, phone_no, email, resume, profile) values ('".$post_name."',".$post_exp.",'".$post_phone."','".$post_email."','".$_POST['resume']."'".",'".$_POST['profile']."')" : "insert into applied_candidates(name, months_of_exp,phone_no, email, profile) values ('".$post_name."',".$post_exp.",'".$post_phone."','".$post_email.",'".$_POST['profile']."')";
                 $wpdb->query($sql);
-                $msg = "Thank you ".$_POST['name'].", your application has been successfully submitted.\nSee you at the interview!";
+                $msg = "Thank you ".$post_name.", your application has been successfully submitted.\nSee you at the interview!";
                 die($msg);
             }
 
